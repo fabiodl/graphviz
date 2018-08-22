@@ -120,7 +120,7 @@ class File(Base):
         if format is None:
             format = self._format
 
-        data = text_type(self.source).encode(self._encoding)
+        data = (uline.encode(self._encoding) for uline in self)
 
         out = backend.pipe(self._engine, format, data)
 
@@ -147,12 +147,9 @@ class File(Base):
         filepath = self.filepath
         tools.mkdirs(filepath)
 
-        data = text_type(self.source)
-
         with io.open(filepath, 'w', encoding=self.encoding) as fd:
-            fd.write(data)
-            if not data.endswith(u'\n'):
-                fd.write(u'\n')
+            for uline in self:
+                fd.write(uline)
 
         return filepath
 
@@ -267,3 +264,8 @@ class Source(File):
         result = super(Source, self)._kwargs()
         result['source'] = self.source
         return result
+
+    def __iter__(self):
+        yield text_type(self.source)
+        if not self.source.endswith(u'\n'):
+            yield u'\n'
