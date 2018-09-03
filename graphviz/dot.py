@@ -53,12 +53,12 @@ class Dot(files.File):
                  filename=None, directory=None,
                  format=None, engine=None, encoding=files.File._encoding,
                  graph_attr=None, node_attr=None, edge_attr=None, body=None,
-                 strict=False):
+                 strict=False, options=[]):
 
         self.name = name
         self.comment = comment
 
-        super(Dot, self).__init__(filename, directory, format, engine, encoding)
+        super(Dot, self).__init__(filename, directory, format, engine, encoding, options=options)
 
         self.graph_attr = dict(graph_attr) if graph_attr is not None else {}
         self.node_attr = dict(node_attr) if node_attr is not None else {}
@@ -67,6 +67,7 @@ class Dot(files.File):
         self.body = list(body) if body is not None else []
 
         self.strict = strict
+        self.options = options
 
     def _kwargs(self):
         result = super(Dot, self)._kwargs()

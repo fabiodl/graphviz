@@ -19,6 +19,7 @@ class Base(object):
     _format = 'pdf'
     _engine = 'dot'
     _encoding = 'utf-8'
+    _options = []
 
     @property
     def format(self):
@@ -56,6 +57,20 @@ class Base(object):
         codecs.lookup(encoding)  # raise early
         self._encoding = encoding
 
+    @property
+    def options(self):
+        """The command line options used for rendering"""
+        return self._options
+
+    @options.setter
+    def options(self, options):
+        if options==[]:
+            raise ValueError("Sob")
+        for option in options:
+            if option not in backend.OPTIONS:
+                raise ValueError('unknown option: %r' % option)
+        self._options = options
+
     def copy(self):
         """Return a copied instance of the object.
 
@@ -78,7 +93,7 @@ class File(Base):
     _default_extension = 'gv'
 
     def __init__(self, filename=None, directory=None,
-                 format=None, engine=None, encoding=Base._encoding):
+                 format=None, engine=None, encoding=Base._encoding, options=[]):
         if filename is None:
             name = getattr(self, 'name', None) or self.__class__.__name__
             filename = '%s.%s' % (name, self._default_extension)
@@ -94,6 +109,8 @@ class File(Base):
             self.engine = engine
 
         self.encoding = encoding
+
+        self.options = options
 
     def _kwargs(self):
         result = super(File, self)._kwargs()
@@ -122,7 +139,7 @@ class File(Base):
 
         data = text_type(self.source).encode(self._encoding)
 
-        out = backend.pipe(self._engine, format, data)
+        out = backend.pipe(self._engine, format, data, options=self._options)
 
         return out
 
@@ -173,7 +190,7 @@ class File(Base):
         """
         filepath = self.save(filename, directory)
 
-        rendered = backend.render(self._engine, self._format, filepath)
+        rendered = backend.render(self._engine, self._format, filepath, options=self._options)
 
         if cleanup:
             os.remove(filepath)
@@ -241,7 +258,7 @@ class Source(File):
 
     @classmethod
     def from_file(cls, filename, directory=None,
-                  format=None, engine=None, encoding=File._encoding):
+                  format=None, engine=None, encoding=File._encoding, options=[]):
         """Return an instance with the source string read from the given file.
 
         Args:
@@ -256,11 +273,11 @@ class Source(File):
             encoding = locale.getpreferredencoding()
         with io.open(filepath, encoding=encoding) as fd:
             source = fd.read()
-        return cls(source, filename, directory, format, engine, encoding)
+        return cls(source, filename, directory, format, engine, encoding, options=options)
 
     def __init__(self, source, filename=None, directory=None,
-                 format=None, engine=None, encoding=File._encoding):
-        super(Source, self).__init__(filename, directory, format, engine, encoding)
+                 format=None, engine=None, encoding=File._encoding, options=[]):
+        super(Source, self).__init__(filename, directory, format, engine, encoding, options=options)
         self.source = source  #: The verbatim DOT source code string.
 
     def _kwargs(self):

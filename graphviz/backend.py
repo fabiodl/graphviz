@@ -56,6 +56,8 @@ FORMATS = {  # http://www.graphviz.org/doc/info/output.html
     'x11',
 }
 
+OPTIONS= ["-n","-y"]
+
 PLATFORM = platform.system().lower()
 
 
@@ -68,15 +70,17 @@ class ExecutableNotFound(RuntimeError):
     def __init__(self, args):
         super(ExecutableNotFound, self).__init__(self._msg % args)
 
-
-def command(engine, format, filepath=None):
+def command(engine, format, filepath=None, options=[]):
     """Return args list for ``subprocess.Popen`` and name of the rendered file."""
     if engine not in ENGINES:
         raise ValueError('unknown engine: %r' % engine)
     if format not in FORMATS:
         raise ValueError('unknown format: %r' % format)
+    for option in options:
+        if option not in OPTIONS:
+            raise ValueError('unknown option: %r'% option)
 
-    cmd = [engine, '-T%s' % format]
+    cmd = [engine, '-T%s' % format] + options
     rendered = None
     if filepath is not None:
         cmd.extend(['-O', filepath])
@@ -123,7 +127,7 @@ def run(cmd, input=None, capture_output=False, check=False, quiet=False, **kwarg
     return out, err
 
 
-def render(engine, format, filepath, quiet=False):
+def render(engine, format, filepath, quiet=False, options=[]):
     """Render file with Graphviz ``engine`` into ``format``,  return result filename.
 
     Args:
@@ -138,12 +142,12 @@ def render(engine, format, filepath, quiet=False):
         graphviz.ExecutableNotFound: If the Graphviz executable is not found.
         subprocess.CalledProcessError: If the exit status is non-zero.
     """
-    cmd, rendered = command(engine, format, filepath)
+    cmd, rendered = command(engine, format, filepath, options=options)
     run(cmd, capture_output=True, check=True, quiet=quiet)
     return rendered
 
 
-def pipe(engine, format, data, quiet=False):
+def pipe(engine, format, data, quiet=False, options=[]):
     """Return ``data`` piped through Graphviz ``engine`` into ``format``.
 
     Args:
@@ -158,7 +162,7 @@ def pipe(engine, format, data, quiet=False):
         graphviz.ExecutableNotFound: If the Graphviz executable is not found.
         subprocess.CalledProcessError: If the exit status is non-zero.
     """
-    cmd, _ = command(engine, format)
+    cmd, _ = command(engine, format, options=options)
     out, _ = run(cmd, input=data, capture_output=True, check=True, quiet=quiet)
     return out
 
