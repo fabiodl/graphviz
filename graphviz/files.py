@@ -64,8 +64,6 @@ class Base(object):
 
     @options.setter
     def options(self, options):
-        if options==[]:
-            raise ValueError("Sob")
         for option in options:
             if option not in backend.OPTIONS:
                 raise ValueError('unknown option: %r' % option)
